@@ -1,80 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Marvin AI Agent</title>
+  <title>Marvin – AI Agent</title>
   <style>
+    :root { --bg:#0a0a23; --panel:#f4f4f4; --ink:#111; --muted:#555; --accent:#2563eb; }
+    * { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
-      margin: 0; padding: 0;
-      display: flex; flex-direction: column;
-      height: 100vh;
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: white; color: var(--ink); height: 100vh; display: flex; flex-direction: column;
     }
     header {
-      background: #0a0a23; color: white;
-      padding: 1rem; text-align: center;
+      background: var(--bg); color: #fff; padding: 16px; display: flex; align-items: center; justify-content: space-between;
     }
-    #chat {
-      flex: 1; overflow-y: auto;
-      padding: 1rem; background: #f4f4f4;
+    header h1 { margin: 0; font-size: 20px; }
+    .pill { font-size: 12px; border: 1px solid #ffffff33; padding: 4px 8px; border-radius: 999px; }
+    #wrap { display:flex; flex:1; min-height:0; }
+    #sidebar { width: 280px; border-right: 1px solid #e5e5e5; padding: 12px; display:none }
+    #main { flex:1; display:flex; flex-direction:column; }
+    #chat { flex:1; overflow-y:auto; padding: 16px; background: var(--panel); }
+    .msg { margin: 8px 0; max-width: 780px; line-height: 1.5; white-space: pre-wrap; }
+    .msg.user { font-weight: 600; color: var(--bg); }
+    .bubble {
+      display:inline-block; padding:10px 12px; border-radius:14px; background:#fff; border:1px solid #e5e5e5;
     }
-    .msg { margin: .5rem 0; }
-    .user { font-weight: bold; color: #0a0a23; }
-    .bot { color: #333; }
-    footer {
-      display: flex; padding: .5rem;
-      border-top: 1px solid #ccc;
+    .assistant .bubble { background:#0f172a0d; }
+    .system { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    footer { display:flex; gap:8px; padding: 10px; border-top: 1px solid #e5e5e5; }
+    textarea, input[type="text"] {
+      width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:12px; font-size: 15px; outline:none;
     }
-    footer input {
-      flex: 1; padding: .5rem; font-size: 1rem;
+    button {
+      padding: 10px 14px; border-radius: 12px; border: 1px solid #c7d2fe; background:#eef2ff; cursor:pointer; font-weight:600;
     }
-    footer button {
-      padding: .5rem 1rem; font-size: 1rem;
-    }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    .row { display:flex; align-items:center; gap:8px; }
+    .tiny { font-size:12px; color:var(--muted); }
+    .right { margin-left:auto; }
+    .badge { font-size: 11px; border:1px solid #e5e7eb; padding: 2px 6px; border-radius: 999px; }
+    .ok { color:#059669; }
+    .err { color:#b91c1c; }
   </style>
 </head>
 <body>
   <header>
     <h1>🤖 Marvin’s AI Agent</h1>
+    <div class="row">
+      <label class="row tiny">
+        <input id="demoToggle" type="checkbox" />
+        Demo mód
+      </label>
+      <span id="status" class="pill">Not connected</span>
+    </div>
   </header>
-  <main id="chat"></main>
-  <footer>
-    <input id="prompt" type="text" placeholder="Type your message..." />
-    <button onclick="sendMsg()">Send</button>
-  </footer>
+
+  <div id="wrap">
+    <aside id="sidebar"></aside>
+    <section id="main">
+      <div id="chat"></div>
+      <footer>
+        <input id="name" type="text" placeholder="Jméno (volitelné)" style="max-width:220px" />
+        <input id="prompt" type="text" placeholder="Napiš zprávu… (Enter odešle)" />
+        <button id="sendBtn">Odeslat</button>
+      </footer>
+    </section>
+  </div>
 
   <script>
-    const chat = document.getElementById('chat');
-    const promptInput = document.getElementById('prompt');
+    // ------- Config -------
+    const DEFAULT_DEMO = true;   // můžeš vypnout po přidání /api/chat
+    const API_PATH = "/api/chat";
+
+    // ------- DOM -------
+    const chatEl   = document.getElementById('chat');
+    const promptEl = document.getElementById('prompt');
+    const nameEl   = document.getElementById('name');
+    const sendBtn  = document.getElementById('sendBtn');
+    const demoTgl  = document.getElementById('demoToggle');
+    const statusEl = document.getElementById('status');
+
+    // ------- State -------
+    let busy = false;
+    demoTgl.checked = DEFAULT_DEMO;
 
     function addMsg(role, text) {
-      const div = document.createElement('div');
-      div.className = 'msg ' + role;
-      div.textContent = (role === 'user' ? 'You: ' : 'Agent: ') + text;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
+      const row = document.createElement('div');
+      row.className = 'msg ' + role;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+      row.appendChild(bubble);
+      chatEl.appendChild(row);
+      chatEl.scrollTop = chatEl.scrollHeight;
+      return bubble; // vrátí poslední bublinu (pro "Thinking..." -> odpověď)
+    }
+
+    function setStatus(ok, text) {
+      statusEl.textContent = text || (ok ? 'Connected' : 'Not connected');
+      statusEl.style.borderColor = ok ? '#10b98166' : '#ffffff33';
+      statusEl.style.background = ok ? '#10b98111' : 'transparent';
+    }
+
+    async function checkApi() {
+      // Nenutíme backend existovat; jen lehce otestujeme HEAD/POST
+      try {
+        const r = await fetch(API_PATH, { method: 'OPTIONS' });
+        if (r.ok) { setStatus(true, 'API ready'); return true; }
+      } catch(_) {}
+      setStatus(false, 'Demo mode or missing API');
+      return false;
     }
 
     async function sendMsg() {
-      const text = promptInput.value.trim();
+      if (busy) return;
+      const text = promptEl.value.trim();
       if (!text) return;
-      addMsg('user', text);
-      promptInput.value = '';
 
-      // zatím demo odpověď
-      addMsg('bot', "Thinking...");
+      const who = nameEl.value.trim();
+      const prefix = who ? who + ': ' : '';
+      promptEl.value = '';
+      addMsg('user', prefix + text);
 
-      const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: text })
-      });
+      busy = true;
+      const thinking = addMsg('assistant', 'Thinking…');
 
-      const data = await res.json();
-      chat.lastChild.textContent = "Agent: " + (data.reply || "Error talking to AI");
+      // DEMO fallback
+      if (demoTgl.checked) {
+        await new Promise(r => setTimeout(r, 400));
+        thinking.textContent = 'Agent: DEMO odpověď. (Po přidání /api/chat a OPENAI_API_KEY se přepni z Demo módu.)';
+        busy = false; return;
+      }
+
+      // Real API call
+      try {
+        const res = await fetch(API_PATH, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: prefix + text })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        thinking.textContent = 'Agent: ' + (data.reply || 'Bez odpovědi.');
+      } catch (err) {
+        thinking.textContent = 'Agent: ⚠️ Nelze kontaktovat backend. Zůstaň v Demo módu nebo doplň /api/chat.';
+      } finally {
+        busy = false;
+      }
     }
-    
+
+    // UI events
+    sendBtn.addEventListener('click', sendMsg);
+    promptEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMsg();
+      }
+    });
+    demoTgl.addEventListener('change', () => {
+      setStatus(!demoTgl.checked, demoTgl.checked ? 'Demo mode' : 'Trying API…');
+      if (!demoTgl.checked) checkApi();
+    });
+
+    // Greeting + API probe
+    addMsg('assistant', 'Ahoj, jsem Marvin.AI. Zkus mi něco napsat. (Můžeš ponechat Demo mód zapnutý, nebo ho vypnout po přidání /api/chat.)');
+    checkApi();
   </script>
 </body>
 </html>
