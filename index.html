@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Marvin AI Agent&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>body {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-family: Arial, sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>margin: 0; padding: 0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display: flex; flex-direction: column;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>height: 100vh;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>header {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: #0a0a23; color: white;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>padding: 1rem; text-align: center;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#chat {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>flex: 1; overflow-y: auto;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>padding: 1rem; background: #f4f4f4;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.msg { margin: .5rem 0; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.user { font-weight: bold; color: #0a0a23; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.bot { color: #333; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>footer {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display: flex; padding: .5rem;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-top: 1px solid #ccc;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>footer input {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>flex: 1; padding: .5rem; font-size: 1rem;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>footer button {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>padding: .5rem 1rem; font-size: 1rem;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;header&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;h1&gt;🤖 Marvin’s AI Agent&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/header&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;main id="chat"&gt;&lt;/main&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;footer&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;input id="prompt" type="text" placeholder="Type your message..." /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;button onclick="sendMsg()"&gt;Send&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/footer&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const chat = document.getElementById('chat');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const promptInput = document.getElementById('prompt');</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function addMsg(role, text) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const div = document.createElement('div');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>div.className = 'msg ' + role;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>div.textContent = (role === 'user' ? 'You: ' : 'Agent: ') + text;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>chat.appendChild(div);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>chat.scrollTop = chat.scrollHeight;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function sendMsg() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const text = promptInput.value.trim();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!text) return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>addMsg('user', text);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>promptInput.value = '';</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// zatím demo odpověď</p>
+<p class="p1"><span class="Apple-converted-space">      </span>addMsg('bot', "DEMO response (later connected to OpenAI backend)");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
