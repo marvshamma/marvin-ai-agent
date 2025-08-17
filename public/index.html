@@ -63,8 +63,18 @@
       promptInput.value = '';
 
       // zatím demo odpověď
-      addMsg('bot', "DEMO response (later connected to OpenAI backend)");
+      addMsg('bot', "Thinking...");
+
+      const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: text })
+      });
+
+      const data = await res.json();
+      chat.lastChild.textContent = "Agent: " + (data.reply || "Error talking to AI");
     }
+    
   </script>
 </body>
 </html>
